@@ -83,6 +83,8 @@
       <groupId>com.mongodb</groupId>
       <artifactId>mongo-java-driver</artifactId>
       <version>2.11.1</version>
+      <scope>system</scope>
+      <systemPath>${project.basedir}/lib/mongo-java-driver-2.11.1.jar</systemPath>
     </dependency>
   </dependencies>
 </project>
