@@ -93,11 +93,4 @@
     </dependency>
   </dependencies>
   
-  <repositories>
-    <repository>
-      <id>BitflipRepo</id>
-      <name>BitflipRepo</name>
-      <url>file://${project.basedir}/lib</url>
-    </repository>
-  </repositories>
 </project>
