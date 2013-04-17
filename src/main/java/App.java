@@ -8,8 +8,8 @@ public class App {
 
     public static void main( String[] args )
     {
-        final Engine engine = new Engine();
-        final ApiServer apiServer = new ApiServer();
+        final Engine engineInstance = Engine.create();
+        final ApiServer serverInstance = ApiServer.create();
         
         Console.start();
         Console.getInstance().registerCommand("stop", 
@@ -17,9 +17,9 @@ public class App {
                 @Override
                 public void call(String[] args) {
                     Console.log(null, "Shutting down...", false);
-
-                    engine.setRunning(false);
-                    apiServer.setRunning(false);
+                    
+                    serverInstance.setRunning(false);
+                    engineInstance.setRunning(false);
 
                     Console.log(null, "Waiting for threads to close...", false);
                     ThreadUtil.despawnAll(true);
@@ -30,16 +30,13 @@ public class App {
             }
         );
         
-        /* Spawn engine instance */
-        if (engine.init()) {
-            ThreadUtil.spawn(engine);
-        }
-        
-        while (!engine.isRunning()) {}
-        
-        /* Spawn ApiServer instance */
-        if (apiServer.init()) {
-            ThreadUtil.spawn(apiServer);
+        if (engineInstance != null && serverInstance != null) {
+            if (engineInstance.init() && serverInstance.init()) {
+                ThreadUtil.spawn(engineInstance);
+                while (!engineInstance.isRunning()) { }
+
+                ThreadUtil.spawn(serverInstance);
+            }
         }
     }
     

@@ -1,6 +1,9 @@
 package io.bitflip.util;
 
+import java.util.Collections;
 import java.util.HashMap;
+import java.util.LinkedList;
+import java.util.List;
 import java.util.Map;
 
 public class ThreadUtil {
@@ -26,7 +29,12 @@ public class ThreadUtil {
     }
     
     public static void despawnAll(boolean waitForEnd) {
-        Runnable[] runnables = spawnedThreads.keySet().toArray(new Runnable[] { });
+        List<Runnable> runnableList = new LinkedList<>();
+        runnableList.addAll(spawnedThreads.keySet());
+        Collections.reverse(runnableList);
+        
+        Runnable[] runnables = runnableList.toArray(new Runnable[runnableList.size()]);
+        runnableList.clear();
         
         for (Runnable r : runnables) {
             if (waitForEnd) {

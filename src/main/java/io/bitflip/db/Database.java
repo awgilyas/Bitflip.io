@@ -10,11 +10,13 @@ import io.bitflip.util.Console;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import lombok.Getter;
 
 public class Database {
     
     public static final DBObject SORT_CREATED_DESC = new BasicDBObject().append("created", 1);
     
+    @Getter private boolean ready;
     private MongoClient mongo;
     private DB mongoDb;
 
@@ -33,10 +35,15 @@ public class Database {
         }
         
         Console.log(this, "Database initialized!"); 
-        return true;
+        return (ready = true);
     }
     
     public List<DBObject> find(String collection, DBObject query) {
+        if (!ready) {
+            Console.log(this, "Database not initialized; cannot execute query!");
+            return null;
+        }
+        
         DBCollection mongoCollection = mongoDb.getCollection(collection);
         
         DBCursor cursor = mongoCollection.find(query);
@@ -50,12 +57,22 @@ public class Database {
     }
     
     public DBObject findOne(String collection, DBObject query) {
+        if (!ready) {
+            Console.log(this, "Database not initialized; cannot execute query!");
+            return null;
+        }
+        
         DBCollection mongoCollection = mongoDb.getCollection(collection);
         
         return mongoCollection.findOne(query);
     }
     
     public DBObject findOneLast(String collection, DBObject query) {
+        if (!ready) {
+            Console.log(this, "Database not initialized; cannot execute query!");
+            return null;
+        }
+        
         DBCollection mongoCollection = mongoDb.getCollection(collection);
         
         DBCursor cursor = mongoCollection.find(query);
@@ -66,6 +83,11 @@ public class Database {
     }
     
     public void update(String collection, List<DBObject> objects) {
+        if (!ready) {
+            Console.log(this, "Database not initialized; cannot execute query!");
+            return;
+        }
+        
         DBCollection mongoCollection = mongoDb.getCollection(collection);
         
         DBObject queryObject;

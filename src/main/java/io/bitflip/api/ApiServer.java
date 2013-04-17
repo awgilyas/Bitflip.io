@@ -1,6 +1,7 @@
 package io.bitflip.api;
 
 import io.bitflip.db.Database;
+import io.bitflip.engine.Engine;
 import io.bitflip.util.Console;
 import io.bitflip.util.ThreadUtil;
 import java.io.IOException;
@@ -17,12 +18,15 @@ import lombok.Setter;
 public class ApiServer implements Runnable {
     
     public static final int DEFAULT_BIND_PORT = 1024;
+    private static ApiServer instance = null;
     
-    @Getter private final Database database;
+    @Getter @Setter private boolean running;
+    @Getter private Database database;
     @Getter private final int bindPort;
     @Getter private boolean ready;
-    @Getter @Setter private boolean running;
     @Getter private SocketAddress localSocketAddress;
+    private Engine engine;
+    
     private AsynchronousServerSocketChannel socketChannel;
     private final CompletionHandler<AsynchronousSocketChannel, ApiServer> acceptHandler = new CompletionHandler() {
 
@@ -48,27 +52,44 @@ public class ApiServer implements Runnable {
     
     public ApiServer(int bindPort) {
         this.bindPort = bindPort;
-        database = new Database();
     }
     
     public ApiServer() {
         this(ApiServer.DEFAULT_BIND_PORT);
     }
     
+    public static ApiServer create() {
+        if (instance == null) {
+            return (instance = new ApiServer());
+        } else {
+            Console.log(instance, "API server instance already created; cannot create new instance.");
+            return null;
+        }
+    }
+    
     public boolean init() {
-        Console.log(this, "API Server initializing...");
+        Console.log(this, "API server initializing...");
         
         try {
             localSocketAddress = new InetSocketAddress(bindPort);
             socketChannel = AsynchronousServerSocketChannel.open().bind(localSocketAddress);
             
-            Console.log(this, "API Server bound to " + localSocketAddress + "!");
+            Console.log(this, "API server bound to " + localSocketAddress + "!");
         } catch (IOException ex) {
             Console.log(this, "Unable to bind to port " + bindPort + "; " + ex);
             return false;
         }
         
-        if (!database.init()) {
+        
+        engine = Engine.getInstance();
+        if (!(engine != null && engine.isReady())) {
+            Console.log(this, "Engine not initialized; cannot initialize API server.");
+            return false;
+        }
+        
+        database = engine.getDatabase();
+        if (!(database != null) && database.isReady()) {
+            Console.log(this, "Database not initialized; cannot initialize API server.");
             return false;
         }
         
@@ -77,10 +98,13 @@ public class ApiServer implements Runnable {
     
     @Override
     public void run() {
-        if (!ready) return;
+        if (!ready) {
+            Console.log(this, "API server not initialized; cannot run!");
+            return;
+        }
 
         running = true;
-        Console.log(this, "API Server started!");
+        Console.log(this, "API server started!");
         
         AsynchronousSocketChannel clientSocketChannel;
         ApiNetClient apiClient;

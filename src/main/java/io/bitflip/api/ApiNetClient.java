@@ -35,6 +35,7 @@ public class ApiNetClient implements Runnable {
                 lineBuilder.append(StandardCharsets.UTF_8.decode(buffer));
                 lines = lineBuilder.toString().replace("\r\n", "\n").split("\n");
                 handleRequest(lines[0]);
+                closeChannel();
             }
             
             readLock = false;
@@ -109,7 +110,7 @@ public class ApiNetClient implements Runnable {
                 } else {
                     writeLine(ApiRequestResult.RESULT_MALFORMED_REQUEST + "\r\n");
                 }
-            } catch (Exception ex) {
+            } catch (Exception | Error e) {
                 writeLine(ApiRequestResult.RESULT_PARSE_ERROR + "\r\n");
             }
         }
@@ -120,7 +121,7 @@ public class ApiNetClient implements Runnable {
         clientSocketChannel.write(buffer);
     }
     
-    private final void closeChannel() {
+    private void closeChannel() {
         try {
             clientSocketChannel.close();
         } catch (IOException ex) {

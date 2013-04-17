@@ -11,14 +11,29 @@ import lombok.Setter;
 public class Engine implements Runnable {
     
     public static final List<Exception> errors = new LinkedList<>();
-    
+    private static Engine instance = null;
+
     @Getter @Setter private boolean running;
+    @Getter private boolean ready;
     @Getter private Database database;
     private TradeHandler tradeHandler;
     
     public Engine() {
         tradeHandler = new TradeHandler(this);
         database = new Database();
+    }
+    
+    public static Engine create() {
+        if (instance == null) {
+            return (instance = new Engine());
+        } else {
+            Console.log(instance, "Engine instance already created; cannot create new instance.");
+            return null;
+        }
+    }
+    
+    public static Engine getInstance() {
+        return instance;
     }
 
     public boolean init() {
@@ -29,17 +44,21 @@ public class Engine implements Runnable {
         }
         
         Console.log(this, "Engine initialized!");
-        return true;
+        return (ready = true);
     }
     
     @Override
     public void run() {
-        running = true;
-        Console.log(this, "Engine started!");
+        if (!ready) {
+            Console.log(this, "Engine not initialized; cannot run!");
+            return;
+        }
         
         ThreadUtil.spawn(tradeHandler);
-        
         while (!tradeHandler.isRunning()) { }
+        
+        Console.log(this, "Engine started!");
+        running = true;
         while (running && tradeHandler.isRunning()) {
             tradeHandler.setRunning(running);
             ThreadUtil.sleep(10);
